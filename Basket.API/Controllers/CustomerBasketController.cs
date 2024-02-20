@@ -35,6 +35,21 @@ namespace Basket.API.Controllers
             return await _service.AddAsync(upsetCustomerBasketDTO);
         }
 
+
+        [HttpPost]
+        [Route("IncreaseItemQuantity")]
+        public async Task<UpsetCustomerBasketResponseDTO> IncreaseItemQuantityAsync(UpsetCustomerBasketDTO upsetCustomerBasketDTO)
+        {
+            return await _service.IncreaseItemQuantityAsync(upsetCustomerBasketDTO);
+        }
+
+        [HttpPost]
+        [Route("ReduceItemQuantity")]
+        public async Task<UpsetCustomerBasketResponseDTO> ReduceItemQuantityAsync(UpsetCustomerBasketDTO upsetCustomerBasketDTO)
+        {
+            return await _service.ReduceItemQuantityAsync(upsetCustomerBasketDTO);
+        }
+
         [HttpDelete]
         [Route("{customerId}")]
         public async Task<bool> RemoveCustomerBasketByCustomerId(int customerId)

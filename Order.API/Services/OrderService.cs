@@ -1,4 +1,6 @@
-﻿using Order.API.Application.Repositories;
+﻿using Confluent.Kafka;
+using Manonero.MessageBus.Kafka.Abstractions;
+using Order.API.Application.Repositories;
 using Order.API.Application.Services;
 using Order.API.DTOs;
 using Order.API.Entities;
@@ -14,6 +16,7 @@ namespace Order.API.Services
         private readonly ILogger<OrderService> _logger;
         private readonly IConfiguration _config;
         private readonly HttpClient _client;
+        public readonly IKafkaProducerManager _producerManager;
 
         public OrderService(
             IProductService productService,
@@ -21,7 +24,9 @@ namespace Order.API.Services
             IOrderRepository repository,
             ILogger<OrderService> logger,
             IConfiguration config,
-            HttpClient client)
+            HttpClient client,
+            IKafkaProducerManager producerManager
+            )
         {
             _productService = productService;
             _customerService = customerService;
@@ -29,6 +34,7 @@ namespace Order.API.Services
             _logger = logger;
             _config = config;
             _client = client;
+            _producerManager = producerManager;
         }
         public async Task<UpsertOrderResponse> AddAsync(UpsertOrder upsertOrder)
         {
@@ -72,8 +78,7 @@ namespace Order.API.Services
                         var orderResult = await _repository.AddOrder(order);
                         if (orderResult != null)
                         {
-                            _productService.UpdateProductQuantity(productUpdateQuantities);
-                            _customerService.RemoveCustomerBasketAsync(order.CustomerId);
+                            ProduceBasketEvent(orderResult);
                             upsertOrderResponse.Data = orderResult;
                             upsertOrderResponse.Message = "Thêm mới thành công";
                             return upsertOrderResponse;
@@ -99,6 +104,27 @@ namespace Order.API.Services
         public Task<OrderModel> GetByIdAsync(string orderId)
         {
             throw new NotImplementedException();
+        }
+
+        //public void ProduceEvent(IntegrationEvent @event)
+        //{
+        //    var json = JsonSerializer.Serialize(@event, @event.GetType(), new JsonSerializerOptions
+        //    {
+        //        WriteIndented = true,
+        //    });
+
+        //    var message = new Message<Null, string> { Value = json };
+        //    _kafkaProducer.Produce(message, "ProductCommand");
+        //}
+
+        private void ProduceBasketEvent(OrderModel orderResult)
+        {
+            var json = JsonSerializer.Serialize(orderResult);
+            var message = new Message<string, string> { Value = json };
+
+            var kafkaProducer = _producerManager.GetProducer<string, string>("Order");
+            kafkaProducer.Produce(message);
+            _logger.LogInformation($"Received message: {message}");
         }
     }
 }

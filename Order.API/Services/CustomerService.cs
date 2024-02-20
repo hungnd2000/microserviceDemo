@@ -54,6 +54,7 @@ namespace Order.API.Services
         {
             try
             {
+                //Delete customerBasket
                 string deleteUrl = _config["HttpGetCustomerBasket"] + "/" + customerId;
                 await _client.DeleteAsync(deleteUrl);
             }
@@ -62,5 +63,6 @@ namespace Order.API.Services
                 _logger.LogError(ex.ToString());
             }
         }
+        
     }
 }

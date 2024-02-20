@@ -16,7 +16,6 @@ namespace Basket.API.Repositories
             _logger = logger;
         }
 
-
         // Customer basket
         public async Task<CustomerBasket> AddCustomerBasketAsync(CustomerBasket basket)
         {
@@ -73,6 +72,22 @@ namespace Basket.API.Repositories
             }
         }
 
+        public async Task<bool> RemoveCustomerBasketByCustomerIdAsync(int customerId)
+        {
+            try
+            {
+                var basketRemove = await GetCustomerBasketByIdAsync(customerId);
+                _context.CustomerBaskets.Remove(basketRemove);
+                await _context.SaveChangesAsync();
+                return true;
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                return false;
+            }
+        }
+
+        // Basket item
         public async Task<CustomerBasket> AddBasketItemAsync(CustomerBasket cusBasket)
         {
             try
@@ -116,7 +131,7 @@ namespace Basket.API.Repositories
                     }
                     else
                     {
-                        for(int i=0; i<customerBasket.Items.Count; i++)
+                        for (int i = 0; i < customerBasket.Items.Count; i++)
                         {
                             if (customerBasket.Items[i].ProductId == productId)
                             {
@@ -131,25 +146,11 @@ namespace Basket.API.Repositories
                     return customerBasket;
                 }
                 return null;
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 return null;
-            }
-        }
-
-        public async Task<bool> RemoveCustomerBasketByCustomerIdAsync(int customerId)
-        {
-            try
-            {
-                var basketRemove = await GetCustomerBasketByIdAsync(customerId);
-                _context.CustomerBaskets.Remove(basketRemove);
-                await _context.SaveChangesAsync();
-                return true;
-            }catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                return false;
             }
         }
     }

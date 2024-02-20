@@ -7,6 +7,8 @@ namespace Basket.API.Application.Services
     {
         Task<List<CustomerBasket>> GetAllCustomerBasketAsync();
         Task<UpsetCustomerBasketResponseDTO> AddAsync(UpsetCustomerBasketDTO upsetCustomerBasketDTO);
+        Task<UpsetCustomerBasketResponseDTO> IncreaseItemQuantityAsync(UpsetCustomerBasketDTO upsetCustomerBasketDTO);
+        Task<UpsetCustomerBasketResponseDTO> ReduceItemQuantityAsync(UpsetCustomerBasketDTO upsetCustomerBasketDTO);
         Task<CustomerBasket> GetBasketByIdAsync(int id);
         Task<bool> RemoveCustomerBasketByCustomerIdAsync(int customerId);
     }
