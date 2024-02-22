@@ -1,10 +1,15 @@
+using Manonero.MessageBus.Kafka.Extensions;
 using Product.API.Application.Repositories;
 using Product.API.Application.Services;
+using Product.API.BackgroundTasks;
 using Product.API.Data;
 using Product.API.Extensions;
 using Product.API.Repositories;
+using Product.API.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
+var ConsumerId = builder.Configuration.GetSection("ConsumerSettings:0:Id").Value;
+var appSetting = AppSetting.MapValue(builder.Configuration);
 
 // Add services to the container.
 
@@ -17,6 +22,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<ProductInMemoryContext>();
 builder.Services.AddHttpClient();
+builder.Services.AddKafkaConsumers(ConsumerBuilder =>
+{
+    ConsumerBuilder.AddConsumer<ConsumerBackgroundTask>(appSetting.GetConsumerSetting(ConsumerId));
+});
 
 var app = builder.Build();
 
@@ -39,5 +48,10 @@ app.LoadDataToMemory<ProductInMemoryContext, ProductDbContext>((inMemoryContext,
     new ProductInMemoryContextSeed().SeedAsync(inMemoryContext, dbContext).Wait();
 });
 
+app.UseKafkaMessageBus(messageBus =>
+{
+    messageBus.RunConsumer(ConsumerId);
+}
+);
 
 app.Run();

@@ -78,7 +78,12 @@ namespace Order.API.Services
                         var orderResult = await _repository.AddOrder(order);
                         if (orderResult != null)
                         {
+
+                            //_productService.UpdateProductQuantity(productUpdateQuantities);
+                            //_customerService.RemoveCustomerBasketAsync(order.CustomerId);
+
                             ProduceBasketEvent(orderResult);
+                            ProduceProductEvent(productUpdateQuantities);
                             upsertOrderResponse.Data = orderResult;
                             upsertOrderResponse.Message = "Thêm mới thành công";
                             return upsertOrderResponse;
@@ -123,6 +128,16 @@ namespace Order.API.Services
             var message = new Message<string, string> { Value = json };
 
             var kafkaProducer = _producerManager.GetProducer<string, string>("Order");
+            kafkaProducer.Produce(message);
+            _logger.LogInformation($"Received message: {message}");
+        }
+
+        private void ProduceProductEvent(List<ProductUpdateQuantity> orderResult)
+        {
+            var json = JsonSerializer.Serialize(orderResult);
+            var message = new Message<string, string> { Value = json };
+
+            var kafkaProducer = _producerManager.GetProducer<string, string>("Order_Result");
             kafkaProducer.Produce(message);
             _logger.LogInformation($"Received message: {message}");
         }

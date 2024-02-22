@@ -9,7 +9,6 @@ using Order.API.Settings;
 using static Confluent.Kafka.ConfigPropertyNames;
 
 var builder = WebApplication.CreateBuilder(args);
-var ProducerId = builder.Configuration.GetSection("ProducerSettings:0:Id").Value;
 var appSetting = AppSetting.MapValue(builder.Configuration);
 
 // Add services to the container.
@@ -26,7 +25,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddKafkaProducers(producerBuilder =>
 {
-    producerBuilder.AddProducer(appSetting.GetProducerSetting(ProducerId));
+    producerBuilder.AddProducer(appSetting.GetProducerSetting(builder.Configuration.GetSection("ProducerSettings:0:Id").Value));
+    producerBuilder.AddProducer(appSetting.GetProducerSetting(builder.Configuration.GetSection("ProducerSettings:1:Id").Value));
 });
 
 var app = builder.Build();
@@ -46,7 +46,8 @@ app.MapControllers();
 
 app.UseKafkaMessageBus(messageBus =>
 {
-    messageBus.RunConsumer(ProducerId);
+    messageBus.RunConsumer(builder.Configuration.GetSection("ProducerSettings:0:Id").Value);
+    messageBus.RunConsumer(builder.Configuration.GetSection("ProducerSettings:1:Id").Value);
 });
 
 app.Run();

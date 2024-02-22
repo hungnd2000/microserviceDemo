@@ -1,10 +1,15 @@
 using Basket.API.Application.Repositories;
 using Basket.API.Application.Services;
+using Basket.API.BackgroundTasks;
 using Basket.API.Database;
 using Basket.API.Repositories;
 using Basket.API.Services;
+using Basket.API.Settings;
+using Manonero.MessageBus.Kafka.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+var ConsumerId = builder.Configuration.GetSection("ConsumerSettings:0:Id").Value;
+var appSetting = AppSetting.MapValue(builder.Configuration);
 
 // Add services to the container.
 
@@ -16,6 +21,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ICustomerBasketRepository, CustomerBasketRepository>();
 builder.Services.AddScoped<ICustomerBasketService, CustomerBasketService>();
 builder.Services.AddHttpClient();
+builder.Services.AddKafkaConsumers(ConsumerBuilder =>
+{
+    ConsumerBuilder.AddConsumer<ConsumerBackgroundTask>(appSetting.GetConsumerSetting(ConsumerId));
+});
 
 
 var app = builder.Build();
@@ -35,6 +44,10 @@ app.UseCors(builder =>
                .AllowAnyMethod()
                .AllowAnyHeader()
     );
-app.MapControllers();
+app.MapControllers(); 
+app.UseKafkaMessageBus(messageBus =>
+{
+    messageBus.RunConsumer(ConsumerId);
+});
 
 app.Run();
